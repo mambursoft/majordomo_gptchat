@@ -26,8 +26,12 @@
  Модель (*):
  </label>
  <div class="col-lg-9">
-  <select name="model" id="model" class="form-control">
+  <select name="model" id="model" class="form-control"[#if MODEL_DEPRECATED#] disabled[#endif MODEL_DEPRECATED#]>
    <option value=""></option>
+   [#if MODEL_DEPRECATED#]
+   <option value="[#MODEL#]" selected>[#MODEL#] (deprecated)</option>
+   <input type="hidden" name="model" value="[#MODEL#]">
+   [#endif MODEL_DEPRECATED#]
    [#if CUSTOM_GPT_URL!=""#]
    <option value="customgpt"[#if MODEL="customgpt"#] selected[#endif#]>Custom API</option>
    [#endif#]
@@ -39,7 +43,7 @@
    [#endif CAN_YANDEX#]
    [#if GPT_MODELS#]
    [#begin GPT_MODELS#]
-   <option value="[#id#]"[#if id="<#MODEL#>"#] selected[#endif#]>[#title#]</option>
+   <option value="[#id#]"[#if id="<#MODEL#>"#] selected[#endif#][#if deprecated="1"#] disabled[#endif deprecated#]>[#title#][#if deprecated="1"#] (deprecated)[#endif deprecated#]</option>
    [#end GPT_MODELS#]
    [#endif GPT_MODELS#]
   </select>
