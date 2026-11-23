@@ -195,6 +195,7 @@ class gptchat extends module
      */
     function delete_gptchats($id)
     {
+        $id = (int)$id;
         $rec = SQLSelectOne("SELECT * FROM gptchats WHERE ID='$id'");
         // some action for related tables
         SQLExec("DELETE FROM gptchats_history WHERE CHAT_ID='" . $rec['ID'] . "'");
@@ -210,8 +211,12 @@ class gptchat extends module
         if ($total) {
             for ($i = 0; $i < $total; $i++) {
                 $image = '';
-                if (is_integer(strpos($value, '/')) && file_exists(ROOT . 'cms/images/' . $value)) {
-                    $image = ROOT . 'cms/images/' . $value;
+                $valueString = is_scalar($value) ? (string)$value : '';
+                if ($valueString !== '' && strpos($valueString, '/') !== false) {
+                    $safeName = basename($valueString);
+                    if ($safeName !== '' && file_exists(ROOT . 'cms/images/' . $safeName)) {
+                        $image = ROOT . 'cms/images/' . $safeName;
+                    }
                 }
                 $this->activateChat($properties[$i]['ID'], array('VALUE' => $value), $image);
 
