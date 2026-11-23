@@ -1,0 +1,104 @@
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>Аналіз зображень у запитах</h4></div>
+    <div class="panel-body">
+        <form method="post" class="form-horizontal" action="?view_mode=images">
+            <input type="hidden" name="image_analyze" value="1">
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Провайдер:</label>
+                <div class="col-lg-9">
+                    <select name="image_provider" class="form-control">
+                    [#begin IMAGE_PROVIDERS#]
+                        <option value="[#ID#]">[#TITLE#]</option>
+                    [#end IMAGE_PROVIDERS#]
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Файл:</label>
+                <div class="col-lg-9">
+                    <select name="image_file" class="form-control">
+                    [#begin IMAGE_FILES#]
+                        <option value="[#FILE#]">[#FILE#]</option>
+                    [#end IMAGE_FILES#]
+                    </select>
+                    <p class="help-block">Знімки з cms/images/ та cms/cached/. Для запиту в чаті можна передати шлях через параметр image.</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Питання до зображення:</label>
+                <div class="col-lg-9">
+                    <textarea name="image_prompt" class="form-control" rows="3">Опиши, що зображено, і назви основні об'єкти.</textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-lg-offset-3 col-lg-9"><button type="submit" class="btn btn-primary">Проаналізувати</button></div>
+            </div>
+        </form>
+        [#if IMAGE_ERROR!=""#]<div class="alert alert-danger">[#IMAGE_ERROR#]</div>[#endif IMAGE_ERROR#]
+        [#if IMAGE_RESULT!=""#]
+        <div class="form-group"><label>Результат:</label>
+            <textarea class="form-control" rows="6" style="font-family:Consolas,monospace;">[#IMAGE_RESULT#]</textarea>
+        </div>
+        [#endif IMAGE_RESULT#]
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>Генерація за промптом (включно зі сценою)</h4></div>
+    <div class="panel-body">
+        <form method="post" class="form-horizontal" action="?view_mode=images">
+            <input type="hidden" name="image_generate" value="1">
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Провайдер:</label>
+                <div class="col-lg-9">
+                    <select name="image_provider" class="form-control">
+                    [#begin IMAGE_PROVIDERS#]
+                        <option value="[#ID#]">[#TITLE#]</option>
+                    [#end IMAGE_PROVIDERS#]
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Промпт:</label>
+                <div class="col-lg-9">
+                    <textarea name="image_gen_prompt" class="form-control" rows="4" placeholder="Наприклад: панель керування розумним будинком на екрані 1920x1080, дані датчиків у вигляді таблиці..."></textarea>
+                    <p class="help-block">Для сцени вкажіть бажаний розмір і опишіть, які дані потрібно візуалізувати: температуру, освітленість, статуси пристроїв.</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Розмір, px:</label>
+                <div class="col-lg-9">
+                    <div class="row">
+                        <div class="col-md-3"><input type="number" name="image_width" class="form-control" value="1024" min="256" max="1536"></div>
+                        <div class="col-md-3"><input type="number" name="image_height" class="form-control" value="1024" min="256" max="1536"></div>
+                    </div>
+                    <p class="help-block">OpenAI: 1024x1024, 1536x1024 або 1024x1536. Gemini підтримує довільний розмір у межах 256–1536.</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-lg-offset-3 col-lg-9"><button type="submit" class="btn btn-primary">Згенерувати</button></div>
+            </div>
+        </form>
+        [#if IMAGE_ERROR!=""#]<div class="alert alert-danger">[#IMAGE_ERROR#]</div>[#endif IMAGE_ERROR#]
+        [#if IMAGE_URL!=""#]
+        <div class="alert alert-success">
+            Готово: <a href="<#ROOTHTML#>[#IMAGE_URL#]" target="_blank">[#IMAGE_URL#]</a><br/>
+            <img src="<#ROOTHTML#>[#IMAGE_URL#]" style="max-width:100%;max-height:420px;" alt="generated">
+        </div>
+        [#endif IMAGE_URL#]
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>Орієнтовна вартість, USD</h4></div>
+    <div class="panel-body">
+        <table class="table table-condensed">
+            <thead><tr><th>Провайдер</th><th>Аналіз зображення</th><th>Генерація</th><th>Приклад</th></tr></thead>
+            <tbody>
+                <tr><td>OpenAI (gpt-4o-mini + gpt-image-1)</td><td>~$0.0002 / зображення</td><td>~$0.01–0.04 / картинка</td><td>10 аналізів + 2 генерації ≈ $0.08</td></tr>
+                <tr><td>Gemini 2.0 Flash + Imagen 3</td><td>~$0.0001 / зображення</td><td>~$0.02 / картинка</td><td>10 аналізів + 2 генерації ≈ $0.04</td></tr>
+            </tbody>
+        </table>
+        <p class="help-block">Ціни орієнтовні в USD. Перед великим обсягом перевіряйте актуальні тарифи провайдера.</p>
+    </div>
+</div>

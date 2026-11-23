@@ -1,3 +1,14 @@
+<p><a class="btn btn-info btn-sm" href="?view_mode=audio">Аудіо → текст / переклад / саммарі</a></p>
+<p><a class="btn btn-primary btn-sm" href="?view_mode=images">Зображення: аналіз і генерація</a></p>
+
+[#if VIEW_MODE="audio"#]
+ [#inc gptchats_audio.html#]
+[#endif VIEW_MODE#]
+[#if VIEW_MODE="images"#]
+ [#inc gptchats_images.html#]
+[#endif VIEW_MODE#]
+
+<p><a class="btn btn-info btn-sm" href="?tab=guide">Гід / Guide</a></p>
 [#if VIEW_MODE="search_gptchats" || VIEW_MODE=""#]
 <!-- table zwave_devices search -->
 <div>
@@ -12,7 +23,7 @@
             Yandex OAuth Token:
             <a href="https://oauth.yandex.ru/authorize?response_type=token&client_id=1a6990aa636648e9b2ef855fa7bec2fb" target="_blank"><i class="glyphicon glyphicon-question-sign"></i></a>
         </label>
-        <div class="controls"><div class="input-group"><input type="password" id="yandex_oauth" name="yandex_oauth" value="[#YANDEX_OAUTH#]" class="form-control" autocomplete="off"><span class="input-group-btn"><button type="button" class="btn btn-default" onclick="var e=document.getElementById('yandex_oauth'); e.type=e.type==='password'?'text':'password'; return false;">Показать</button></span></div></div>
+        <div class="controls"><input type="text" name="yandex_oauth" value="[#YANDEX_OAUTH#]" class="form-control"></div>
     </div>
 <div class="form-group">
  <label class="control-label"[#if ERR_YANDEX_CATALOG_ID#] style="color:red;font-weight:bold"[#endif#]>
@@ -27,7 +38,7 @@
             OpenAI API Key:
             <a href="https://platform.openai.com/api-keys" target="_blank"><i class="glyphicon glyphicon-question-sign"></i></a>
         </label>
-        <div class="controls"><div class="input-group"><input type="password" id="openai_api_key" name="openai_api_key" value="[#OPENAI_API_KEY#]" class="form-control" autocomplete="off"><span class="input-group-btn"><button type="button" class="btn btn-default" onclick="var e=document.getElementById('openai_api_key'); e.type=e.type==='password'?'text':'password'; return false;">Показать</button></span></div></div>
+        <div class="controls"><input type="text" name="openai_api_key" value="[#OPENAI_API_KEY#]" class="form-control"></div>
     </div>
 
 
@@ -48,7 +59,7 @@
         <label class="control-label"[#if ERR_CUSTOM_GPT_KEY#] style="color:red;font-weight:bold"[#endif#]>
             Custom API key (optional):
         </label>
-        <div class="controls"><div class="input-group"><input type="password" id="custom_gpt_key" name="custom_gpt_key" value="[#CUSTOM_GPT_KEY#]" class="form-control" autocomplete="off"><span class="input-group-btn"><button type="button" class="btn btn-default" onclick="var e=document.getElementById('custom_gpt_key'); e.type=e.type==='password'?'text':'password'; return false;">Показать</button></span></div></div>
+        <div class="controls"><input type="text" name="custom_gpt_key" value="[#CUSTOM_GPT_KEY#]" class="form-control"></div>
     </div>
 
 <div class="form-actions">
@@ -81,6 +92,9 @@
  <li[#if TAB="result"#] class="active"[#endif#]>
  <a href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&id=<#ID#>&tab=result">Результат</a>
  </li>
+ <li[#if TAB="guide"#] class="active"[#endif#]>
+ <a href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&id=<#ID#>&tab=guide">Гід / Guide</a>
+ </li>
  <li[#if TAB="history"#] class="active"[#endif#]>
  <a href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&id=<#ID#>&tab=history"><#LANG_HISTORY#></a>
  </li>
@@ -99,6 +113,9 @@
    [#endif TAB#]
    [#if TAB="history"#]
     [#inc gptchats_edit_history.html#]
+   [#endif TAB#]
+   [#if TAB="guide"#]
+    [#inc gptchats_edit_guide.html#]
    [#endif TAB#]
  [#endif VIEW_MODE#]
  <!-- / table gptchats edit -->

@@ -1,0 +1,59 @@
+<div class="panel panel-default">
+    <div class="panel-heading">
+        Язык: 
+        <a class="btn btn-xs btn-default" href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&id=<#ID#>&tab=guide&guide_lang=ru">RU</a>
+        <a class="btn btn-xs btn-default" href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&id=<#ID#>&tab=guide&guide_lang=en">EN</a>
+        <a class="btn btn-xs btn-default" href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&id=<#ID#>&tab=guide&guide_lang=uk">UK</a>
+    </div>
+    <div class="panel-body">
+
+    [#if GUIDE_LANG="ru"#]
+    <h3>Как начать работу с LLM</h3>
+    <ol>
+        <li><b>Выберите провайдера.</b> Для YandexGPT нужны OAuth-токен и Catalog ID, для OpenAI — API Key, для кастомного OpenAI-совместимого API — URL и ключ.</li>
+        <li><b>Создайте чат</b> на главной странице модуля и задайте ему название.</li>
+        <li><b>Выберите модель.</b> Новые модели предпочтительнее; устаревшие отмечены как deprecated и доступны только для чтения, пока вы не перейдёте на актуальную.</li>
+        <li><b>Инструкция</b> — это роль и правила для модели (например: «ты краткий помощник по погоде»).</li>
+        <li><b>Запрос</b> — конкретный вопрос. В него можно подставлять значения свойств: <code>%Объект.свойство%</code>.</li>
+        <li><b>Температура</b> — креативность: 0 — предсказуемо, 0.7–1 — более свободные формулировки.</li>
+        <li><b>Связанное свойство</b> — если заполнить, чат запускается автоматически при изменении этого свойства.</li>
+        <li><b>Результат</b> — можно обработать кодом и/или озвучить через терминал.</li>
+        <li><b>История</b> хранит все запросы и ответы; кнопка «Run now» позволяет повторить чат вручную.</li>
+    </ol>
+    <p class="text-muted">Совет: начинайте с простой инструкции и одного запроса, затем добавляйте обработку результата.</p>
+    [#endif GUIDE_LANG#]
+
+    [#if GUIDE_LANG="en"#]
+    <h3>Getting started with LLMs</h3>
+    <ol>
+        <li><b>Choose a provider.</b> YandexGPT needs an OAuth token and Catalog ID; OpenAI needs an API key; a custom OpenAI-compatible API needs a URL and key.</li>
+        <li><b>Create a chat</b> on the module's main page and give it a name.</li>
+        <li><b>Pick a model.</b> Prefer current models; deprecated ones are marked and read-only until you switch to a supported model.</li>
+        <li><b>Instruction</b> defines the role and rules, for example: "you are a concise weather assistant".</li>
+        <li><b>Prompt</b> is the actual question. You can insert property values like <code>%Object.property%</code>.</li>
+        <li><b>Temperature</b> controls creativity: 0 is deterministic, 0.7–1 gives more varied wording.</li>
+        <li><b>Linked property</b> makes the chat run automatically when that property changes.</li>
+        <li><b>Result</b> can be processed with code and/or spoken through a terminal.</li>
+        <li><b>History</b> stores requests and answers; "Run now" repeats the chat manually.</li>
+    </ol>
+    <p class="text-muted">Tip: start with a short instruction and a single prompt, then add result processing.</p>
+    [#endif GUIDE_LANG#]
+
+    [#if GUIDE_LANG="uk"#]
+    <h3>Як почати роботу з LLM</h3>
+    <ol>
+        <li><b>Виберіть провайдера.</b> Для YandexGPT потрібні OAuth-токен і Catalog ID, для OpenAI — API Key, для власного OpenAI-сумісного API — URL і ключ.</li>
+        <li><b>Створіть чат</b> на головній сторінці модуля та задайте йому назву.</li>
+        <li><b>Виберіть модель.</b> Краще використовувати актуальні; застарілі позначені як deprecated і доступні лише для читання, доки ви не перейдете на нову.</li>
+        <li><b>Інструкція</b> — це роль і правила для моделі, наприклад: «ти короткий помічник з погоди».</li>
+        <li><b>Запит</b> — конкретне питання. У нього можна підставляти значення властивостей: <code>%Об'єкт.властивість%</code>.</li>
+        <li><b>Температура</b> — креативність: 0 — передбачувано, 0.7–1 — більш вільні формулювання.</li>
+        <li><b>Пов'язана властивість</b> — якщо заповнити, чат запускатиметься автоматично при зміні цієї властивості.</li>
+        <li><b>Результат</b> можна обробити кодом та/або озвучити через термінал.</li>
+        <li><b>Історія</b> зберігає запити й відповіді; кнопка «Run now» дозволяє повторити чат вручну.</li>
+    </ol>
+    <p class="text-muted">Порада: почніть із короткої інструкції та одного запиту, потім додавайте обробку результату.</p>
+    [#endif GUIDE_LANG#]
+
+    </div>
+</div>

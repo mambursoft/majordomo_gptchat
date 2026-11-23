@@ -1,4 +1,4 @@
-
+﻿
 <!-- Table 'gptchats' edit -->
 <form action="?" method="post" enctype="multipart/form-data" name="frmEdit" class="form-horizontal">
     [#if OK#]
@@ -80,11 +80,17 @@
                 <div class="help-block">Сформулируйте свой запрос к модели. Это могут быть ключевые слова, конкретное задание или вопрос.<br/>
                     В запросе можно использовать переданные параметры в виде %PARAM1%, а так же свойства объектов системы в виде %OBJECT.PROPERTY% .
                 </div>
+                [#if PROMPT_IMPROVED#]
+                <div class="alert alert-success">Запрос улучшен и сохранён. Изменения вступят в силу при следующей активации чата.</div>
+                [#endif PROMPT_IMPROVED#]
             </div>
         </div>
         <div class="form-group">
             <div class="col-lg-offset-3 col-lg-4">
                 <button type="submit" name="subm" value="Submit" class="btn btn-primary"><#LANG_SUBMIT#></button>
+                [#if ID!=""#]
+                <button type="submit" class="btn btn-info" onclick="document.getElementsByName('mode')[0].value='improve_prompt'; return true;">Покращити запит зараз</button>
+                [#endif ID#]
                 <a href="?" class="btn btn-default "><#LANG_CANCEL#></a>
                 <input type="hidden" name="id" value="<#ID#>">
                 <input type="hidden" name="view_mode" value="<#VIEW_MODE#>">
