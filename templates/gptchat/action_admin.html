@@ -1,3 +1,9 @@
+<p><a class="btn btn-primary btn-sm" href="?view_mode=images">Зображення: аналіз і генерація</a></p>
+
+[#if VIEW_MODE="images"#]
+ [#inc gptchats_images.html#]
+[#endif VIEW_MODE#]
+
 [#if VIEW_MODE="search_gptchats" || VIEW_MODE=""#]
 <!-- table zwave_devices search -->
 <div>

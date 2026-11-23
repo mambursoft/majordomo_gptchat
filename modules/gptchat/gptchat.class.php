@@ -129,6 +129,39 @@ class gptchat extends module
         $out['CUSTOM_GPT_URL'] = $this->config['CUSTOM_GPT_URL'];
         $out['CUSTOM_GPT_MODEL'] = $this->config['CUSTOM_GPT_MODEL'];
         $out['CUSTOM_GPT_KEY'] = $this->config['CUSTOM_GPT_KEY'];
+
+          if ($this->view_mode == 'images') {
+              $out['IMAGE_PROVIDERS'] = array();
+              foreach ($this->imageProviders() as $id => $title) {
+                  $out['IMAGE_PROVIDERS'][] = array('ID' => $id, 'TITLE' => $title);
+              }
+              $out['IMAGE_FILES'] = array();
+              foreach ($this->imageFiles() as $file) {
+                  $out['IMAGE_FILES'][] = array('FILE' => $file);
+              }
+              $out['IMAGE_RESULT'] = '';
+              $out['IMAGE_URL'] = '';
+              $out['IMAGE_ERROR'] = '';
+              if (isset($_POST['image_analyze'])) {
+                  $result = $this->imageAnalyze(
+                      isset($_POST['image_provider']) ? (string)$_POST['image_provider'] : 'openai',
+                      isset($_POST['image_file']) ? (string)$_POST['image_file'] : '',
+                      isset($_POST['image_prompt']) ? (string)$_POST['image_prompt'] : 'Опиши изображение'
+                  );
+                  $out['IMAGE_RESULT'] = $result['text'];
+                  $out['IMAGE_ERROR'] = $result['error'];
+              }
+              if (isset($_POST['image_generate'])) {
+                  $result = $this->imageGenerate(
+                      isset($_POST['image_provider']) ? (string)$_POST['image_provider'] : 'openai',
+                      isset($_POST['image_gen_prompt']) ? (string)$_POST['image_gen_prompt'] : '',
+                      isset($_POST['image_width']) ? (int)$_POST['image_width'] : 1024,
+                      isset($_POST['image_height']) ? (int)$_POST['image_height'] : 1024
+                  );
+                  $out['IMAGE_URL'] = $result['url'];
+                  $out['IMAGE_ERROR'] = $result['error'];
+              }
+          }
         if ($this->view_mode == 'update_settings') {
             $this->config['YANDEX_OAUTH'] = gr('yandex_oauth');
             $this->config['YANDEX_CATALOG_ID'] = gr('yandex_catalog_id');
@@ -250,6 +283,22 @@ class gptchat extends module
 
         $instructions = processTitle($chat['INSTRUCTIONS']);
         $prompt = processTitle($chat['PROMPT']);
+
+        if ($image != '' && !preg_match('/\.(mp3|wav|ogg|m4a)$/i', $image)) {
+            $imagePath = ROOT . ltrim(str_replace('\\', '/', $image), '/');
+            if (is_file($imagePath)) {
+                $analysis = $this->imageAnalyze(
+                    preg_match('/gemini/i', $chat['MODEL']) ? 'gemini' : 'openai',
+                    ltrim(str_replace(array(ROOT, '\\'), array('', '/'), $imagePath), '/'),
+                    $prompt
+                );
+                if ($analysis['text'] !== '') {
+                    $prompt .= "\nImage analysis: " . $analysis['text'];
+                } else {
+                    DebMes('Image analysis failed in chat ' . (int)$chat['ID'] . ': ' . $analysis['error'], 'gptchat');
+                }
+            }
+        }
 
         if ($chat['MODEL'] == 'customgpt') {
             $answer = $this->customgpt($instructions, $prompt, (float)$chat['TEMPERATURE'], $image);
@@ -537,6 +586,151 @@ class gptchat extends module
             }
         }
         return $answer;
+    }
+
+    function imageProviders()
+    {
+        return array(
+            'openai' => 'OpenAI (vision + images)',
+            'gemini' => 'Google Gemini (vision + Imagen)',
+        );
+    }
+
+    function imageFiles()
+    {
+        $files = array();
+        $dirs = array(
+            ROOT . 'cms' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR,
+            ROOT . 'cms' . DIRECTORY_SEPARATOR . 'cached' . DIRECTORY_SEPARATOR,
+        );
+        foreach ($dirs as $dir) {
+            if (!is_dir($dir)) continue;
+            foreach (glob($dir . '*.{png,jpg,jpeg,webp}', GLOB_BRACE) as $file) {
+                $files[] = str_replace(ROOT, '', $file);
+            }
+        }
+        sort($files);
+        return $files;
+    }
+
+    function imageAnalyze($provider, $file, $prompt)
+    {
+        $file = ltrim(str_replace('\\', '/', (string)$file), '/');
+        if (strpos($file, '..') !== false || !is_file(ROOT . $file)) {
+            return array('text' => '', 'error' => 'Файл не найден или путь вне каталога проекта');
+        }
+        $this->getConfig();
+        $mime = 'image/jpeg';
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if ($ext === 'png') $mime = 'image/png';
+        if ($ext === 'webp') $mime = 'image/webp';
+        $base64 = base64_encode(file_get_contents(ROOT . $file));
+
+        if ($provider === 'gemini') {
+            if (empty($this->config['GEMINI_API_KEY'])) return array('text' => '', 'error' => 'Не задан Gemini API Key');
+            $payload = array('contents' => array(array('parts' => array(
+                array('text' => $prompt),
+                array('inline_data' => array('mime_type' => $mime, 'data' => $base64)),
+            ))));
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . rawurlencode($this->config['GEMINI_API_KEY']);
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            $result = curl_exec($ch);
+            if ($result === false) { $e = curl_error($ch); curl_close($ch); return array('text' => '', 'error' => $e); }
+            curl_close($ch);
+            $data = json_decode($result, true);
+            if (isset($data['candidates'][0]['content']['parts'][0]['text'])) return array('text' => $data['candidates'][0]['content']['parts'][0]['text'], 'error' => '');
+            return array('text' => '', 'error' => substr((string)$result, 0, 300));
+        }
+
+        if (empty($this->config['OPENAI_API_KEY'])) return array('text' => '', 'error' => 'Не задан OpenAI API Key');
+        $payload = array(
+            'model' => 'gpt-4o-mini',
+            'messages' => array(array('role' => 'user', 'content' => array(
+                array('type' => 'text', 'text' => $prompt),
+                array('type' => 'image_url', 'image_url' => array('url' => 'data:' . $mime . ';base64,' . $base64)),
+            ))),
+        );
+        $ch = curl_init('https://api.openai.com/v1/chat/completions');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Authorization: Bearer ' . $this->config['OPENAI_API_KEY']));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+        $result = curl_exec($ch);
+        if ($result === false) { $e = curl_error($ch); curl_close($ch); return array('text' => '', 'error' => $e); }
+        curl_close($ch);
+        $data = json_decode($result, true);
+        if (isset($data['choices'][0]['message']['content'])) return array('text' => $data['choices'][0]['message']['content'], 'error' => '');
+        return array('text' => '', 'error' => substr((string)$result, 0, 300));
+    }
+
+    function imageGenerate($provider, $prompt, $width = 1024, $height = 1024)
+    {
+        $this->getConfig();
+        $width = max(256, min(1536, (int)$width));
+        $height = max(256, min(1536, (int)$height));
+
+        if ($provider === 'gemini') {
+            if (empty($this->config['GEMINI_API_KEY'])) return array('url' => '', 'error' => 'Не задан Gemini API Key');
+            $payload = array('instances' => array(array('prompt' => $prompt)));
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=' . rawurlencode($this->config['GEMINI_API_KEY']);
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 180);
+            $result = curl_exec($ch);
+            if ($result === false) { $e = curl_error($ch); curl_close($ch); return array('url' => '', 'error' => $e); }
+            curl_close($ch);
+            $data = json_decode($result, true);
+            if (isset($data['predictions'][0]['bytesBase64Encoded'])) {
+                $binary = base64_decode($data['predictions'][0]['bytesBase64Encoded']);
+                return $this->saveGeneratedImage($binary);
+            }
+            return array('url' => '', 'error' => substr((string)$result, 0, 300));
+        }
+
+        if (empty($this->config['OPENAI_API_KEY'])) return array('url' => '', 'error' => 'Не задан OpenAI API Key');
+        $size = $width >= $height ? $width . 'x' . $height : $height . 'x' . $width;
+        $allowed = array('1024x1024', '1536x1024', '1024x1536');
+        if (!in_array($size, $allowed, true)) $size = '1024x1024';
+        $payload = array('model' => 'gpt-image-1', 'prompt' => $prompt, 'size' => $size, 'n' => 1);
+        $ch = curl_init('https://api.openai.com/v1/images/generations');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Authorization: Bearer ' . $this->config['OPENAI_API_KEY']));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 180);
+        $result = curl_exec($ch);
+        if ($result === false) { $e = curl_error($ch); curl_close($ch); return array('url' => '', 'error' => $e); }
+        curl_close($ch);
+        $data = json_decode($result, true);
+        if (isset($data['data'][0]['b64_json'])) {
+            return $this->saveGeneratedImage(base64_decode($data['data'][0]['b64_json']));
+        }
+        if (isset($data['data'][0]['url'])) return array('url' => $data['data'][0]['url'], 'error' => '');
+        return array('url' => '', 'error' => substr((string)$result, 0, 300));
+    }
+
+    function saveGeneratedImage($binary)
+    {
+        $dir = ROOT . 'cms' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR;
+        if (!is_dir($dir)) @mkdir($dir, 0755, true);
+        $name = 'gptchat_' . date('Ymd_His') . '_' . substr(md5((string)microtime(true)), 0, 6) . '.png';
+        if (file_put_contents($dir . $name, $binary) === false) {
+            return array('url' => '', 'error' => 'Не удалось сохранить изображение');
+        }
+        return array('url' => 'cms/images/' . $name, 'error' => '');
     }
 
     function api($params)
