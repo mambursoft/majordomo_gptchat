@@ -68,6 +68,7 @@
  <!-- / table gptchats search -->
  <!-- table gptchats edit -->
  [#if VIEW_MODE="edit_gptchats"#]
+<p><a class="btn btn-info btn-sm" href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&id=<#ID#>&tab=guide">Гід для початківців / Beginner guide</a></p>
 
 [#if ID!=""#]
 [#if TITLE!=""#]<h4>[#TITLE#]</h4>[#endif TITLE#]
@@ -84,6 +85,9 @@
  <li[#if TAB="history"#] class="active"[#endif#]>
  <a href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&id=<#ID#>&tab=history"><#LANG_HISTORY#></a>
  </li>
+ <li[#if TAB="guide"#] class="active"[#endif#]>
+ <a href="?data_source=<#DATA_SOURCE#>&view_mode=<#VIEW_MODE#>&id=<#ID#>&tab=guide">Гід / Guide</a>
+ </li>
 </ul>
 &nbsp;<br/>
 [#endif ID#]
@@ -99,6 +103,9 @@
    [#endif TAB#]
    [#if TAB="history"#]
     [#inc gptchats_edit_history.html#]
+   [#endif TAB#]
+   [#if TAB="guide"#]
+    [#inc gptchats_edit_guide.html#]
    [#endif TAB#]
  [#endif VIEW_MODE#]
  <!-- / table gptchats edit -->

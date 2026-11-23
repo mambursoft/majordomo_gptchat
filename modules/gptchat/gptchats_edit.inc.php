@@ -7,6 +7,14 @@ if ($this->owner->name == 'panel') {
 }
 $table_name = 'gptchats';
 $rec = SQLSelectOne("SELECT * FROM $table_name WHERE ID='" . (int)$id . "'");
+$guideLang = isset($_GET['guide_lang']) ? (string)$_GET['guide_lang'] : '';
+if ($guideLang === 'ua') $guideLang = 'uk';
+if (!in_array($guideLang, array('ru', 'en', 'uk'), true)) {
+    $guideLang = defined('SETTINGS_SITE_LANGUAGE') ? SETTINGS_SITE_LANGUAGE : 'ru';
+    if ($guideLang === 'ua') $guideLang = 'uk';
+    if (!in_array($guideLang, array('ru', 'en', 'uk'), true)) $guideLang = 'ru';
+}
+$out['GUIDE_LANG'] = $guideLang;
 
 if ($this->tab == 'history' && $rec['ID']) {
     if ($this->mode == 'run') {
