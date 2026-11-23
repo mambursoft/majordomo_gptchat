@@ -262,6 +262,10 @@ class gptchat extends module
         $instructions = processTitle($chat['INSTRUCTIONS']);
         $prompt = processTitle($chat['PROMPT']);
 
+        if ($image != '' && preg_match('/^(claude|gemini|deepseek|kimi|qwen)/i', $chat['MODEL'])) {
+            DebMes('Image input is not supported for model ' . $chat['MODEL'] . ', ignoring image', 'gptchat');
+        }
+
         if ($chat['MODEL'] == 'customgpt') {
             $answer = $this->customgpt($instructions, $prompt, (float)$chat['TEMPERATURE'], $image);
         } elseif (preg_match('/yandex/is', $chat['MODEL'])) {
@@ -588,6 +592,7 @@ class gptchat extends module
             'yandexgpt-lite-rc', 'yandex_summarization',
         );
         return in_array(strtolower(trim((string)$model)), $deprecated, true);
+    }
     function requestJson($url, $headers, $payload)
     {
         $ch = curl_init($url);

@@ -23,6 +23,23 @@
 
 Для новых провайдеров задайте ключ в настройках модуля и используйте в чате модель с соответствующим префиксом: `claude-*`, `gemini-*`, `deepseek-*`, `kimi-*`, `qwen-*`.
 
+## Особенности API разных провайдеров
+
+Модуль учитывает форматы запросов и ответов:
+
+| Провайдер | Формат запроса | Ответ | Системная инструкция | Изображения |
+|---|---|---|---|---|
+| OpenAI / Custom / DeepSeek / Kimi / Qwen | `chat/completions`, `messages[]` | `choices[0].message.content` | `role: system` | OpenAI/Custom — да, остальные — нет |
+| Yandex GPT | `modelUri` + `completionOptions` | `result.alternatives[0].message.text` | `role: system` | через отдельный сценарий |
+| Claude | `messages[]` + `system` сверху | `content[0].text` | отдельное поле `system` | нет |
+| Gemini | `contents[].parts[]`, `generationConfig` | `candidates[0].content.parts[0].text` | добавлена к тексту запроса | нет |
+
+Ограничения:
+- изображения сейчас передаются только в OpenAI и Custom OpenAI-совместимый endpoint (формат `image_url`);
+- для Claude/Gemini/DeepSeek/Kimi/Qwen изображение игнорируется — в лог пишется предупреждение;
+- `temperature` ограничен диапазоном 0–1, что подходит всем указанным API;
+- максимум токенов ответа: 1000 для Yandex и Claude, 1000 для Gemini, для OpenAI-совместимых — по умолчанию провайдера.
+
 Для работы модуля небходимо получить системные ключи авторизации запросов и прописать их в настройки модуля.
 
 Возможности:
