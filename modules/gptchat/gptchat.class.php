@@ -151,6 +151,7 @@ class gptchat extends module
         $out['CUSTOM_GPT_URL'] = $this->config['CUSTOM_GPT_URL'];
         $out['CUSTOM_GPT_MODEL'] = $this->config['CUSTOM_GPT_MODEL'];
         $out['CUSTOM_GPT_KEY'] = $this->config['CUSTOM_GPT_KEY'];
+        $out['ELEVENLABS_API_KEY'] = isset($this->config['ELEVENLABS_API_KEY']) ? $this->config['ELEVENLABS_API_KEY'] : '';
         if ($this->view_mode == 'update_settings') {
             $this->config['YANDEX_OAUTH'] = gr('yandex_oauth');
             $this->config['YANDEX_CATALOG_ID'] = gr('yandex_catalog_id');
@@ -158,6 +159,7 @@ class gptchat extends module
             $this->config['CUSTOM_GPT_URL'] = gr('custom_gpt_url');
             $this->config['CUSTOM_GPT_MODEL'] = gr('custom_gpt_model');
             $this->config['CUSTOM_GPT_KEY'] = gr('custom_gpt_key');
+            $this->config['ELEVENLABS_API_KEY'] = gr('elevenlabs_api_key');
             $this->saveConfig();
             $this->redirect("?");
         }
@@ -565,6 +567,7 @@ class gptchat extends module
     {
         return array(
             'openai' => 'OpenAI Whisper + Chat',
+            'elevenlabs' => 'ElevenLabs Speech to Text',
             'gemini' => 'Google Gemini (audio)',
             'yandex' => 'Yandex SpeechKit + GPT',
         );
@@ -599,6 +602,25 @@ class gptchat extends module
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer ' . $this->config['OPENAI_API_KEY']));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            $result = curl_exec($ch);
+            if ($result === false) { $error = curl_error($ch); curl_close($ch); return array('text' => '', 'error' => $error); }
+            curl_close($ch);
+            $data = json_decode($result, true);
+            if (isset($data['text'])) return array('text' => $data['text'], 'error' => '');
+            return array('text' => '', 'error' => substr((string)$result, 0, 300));
+        }
+
+        if ($provider === 'elevenlabs') {
+            if (empty($this->config['ELEVENLABS_API_KEY'])) return array('text' => '', 'error' => 'Не задан ElevenLabs API Key');
+            $ch = curl_init('https://api.elevenlabs.io/v1/speech-to-text');
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('xi-api-key: ' . $this->config['ELEVENLABS_API_KEY']));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            $post = array('file' => '@' . $filePath, 'model_id' => 'scribe_v1');
+            if ($language !== '') $post['language_code'] = $language;
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
             curl_setopt($ch, CURLOPT_TIMEOUT, 120);
@@ -686,7 +708,7 @@ class gptchat extends module
             $instruction = $task === 'translate'
                 ? 'Translate the following text into ' . $language . '. Return only the translation.'
                 : 'Summarize the following text in ' . $language . '. Return only the summary.';
-            $model = $provider === 'openai' ? 'gpt-4o-mini' : ($provider === 'yandex' ? 'yandexgpt-lite' : 'gemini-2.0-flash');
+            $model = $provider === 'openai' ? 'gpt-4o-mini' : ($provider === 'yandex' ? 'yandexgpt-lite' : 'gemini-2.0-flash'); // ElevenLabs uses Gemini for text tasks
             if (method_exists($this, 'callProvider')) {
                 $textResult = $this->callProvider($model, $instruction, $text, 0);
             } elseif ($provider === 'openai' && method_exists($this, 'openaigpt')) {
