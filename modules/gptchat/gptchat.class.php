@@ -129,7 +129,7 @@ class gptchat extends module
         $out['CUSTOM_GPT_URL'] = $this->config['CUSTOM_GPT_URL'];
         $out['CUSTOM_GPT_MODEL'] = $this->config['CUSTOM_GPT_MODEL'];
         $out['CUSTOM_GPT_KEY'] = $this->config['CUSTOM_GPT_KEY'];
-        if ($this->view_mode == 'update_settings') {
+        if ($this->view_mode == 'update_settings' && $this->action == 'admin') {
             $this->config['YANDEX_OAUTH'] = gr('yandex_oauth');
             $this->config['YANDEX_CATALOG_ID'] = gr('yandex_catalog_id');
             $this->config['OPENAI_API_KEY'] = gr('openai_api_key');
@@ -149,7 +149,7 @@ class gptchat extends module
             if ($this->view_mode == 'edit_gptchats') {
                 $this->edit_gptchats($out, $this->id);
             }
-            if ($this->view_mode == 'delete_gptchats') {
+            if ($this->view_mode == 'delete_gptchats' && $this->action == 'admin') {
                 $this->delete_gptchats($this->id);
                 $this->redirect("?");
             }
