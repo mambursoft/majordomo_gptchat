@@ -14,6 +14,14 @@
 Поддерживаемые сервисы:
 - Yandex GPT
 - Open AI (Chat GPT)
+- Claude (Anthropic)
+- Gemini (Google)
+- DeepSeek
+- Kimi (Moonshot)
+- Qwen (DashScope)
+- Любой OpenAI-совместимый endpoint через «Custom OpenAI compatible API URL»
+
+Для новых провайдеров задайте ключ в настройках модуля и используйте в чате модель с соответствующим префиксом: `claude-*`, `gemini-*`, `deepseek-*`, `kimi-*`, `qwen-*`.
 
 Для работы модуля небходимо получить системные ключи авторизации запросов и прописать их в настройки модуля.
 
