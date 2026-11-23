@@ -266,6 +266,12 @@ class gptchat extends module
             $answer = $this->customgpt($instructions, $prompt, (float)$chat['TEMPERATURE'], $image);
         } elseif (preg_match('/yandex/is', $chat['MODEL'])) {
             $answer = $this->yandexgpt($chat['MODEL'], $instructions, $prompt, (float)$chat['TEMPERATURE'], $image);
+        } elseif (preg_match('/^claude/i', $chat['MODEL'])) {
+            $answer = $this->claudegpt($chat['MODEL'], $instructions, $prompt, (float)$chat['TEMPERATURE']);
+        } elseif (preg_match('/^gemini/i', $chat['MODEL'])) {
+            $answer = $this->geminigpt($chat['MODEL'], $instructions, $prompt, (float)$chat['TEMPERATURE']);
+        } elseif (preg_match('/^(deepseek|kimi|qwen)/i', $chat['MODEL'], $providerMatch)) {
+            $answer = $this->openaiCompatible(strtolower($providerMatch[1]), $chat['MODEL'], $instructions, $prompt, (float)$chat['TEMPERATURE']);
         } else {
             $answer = $this->openaigpt($chat['MODEL'], $instructions, $prompt, (float)$chat['TEMPERATURE'], $image);
         }
@@ -582,6 +588,87 @@ class gptchat extends module
             'yandexgpt-lite-rc', 'yandex_summarization',
         );
         return in_array(strtolower(trim((string)$model)), $deprecated, true);
+    function requestJson($url, $headers, $payload)
+    {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
+        $result = curl_exec($ch);
+        if ($result === false) {
+            DebMes('gptchat cURL error: ' . curl_error($ch), 'gptchat');
+            $result = '';
+        }
+        curl_close($ch);
+        return $result;
+    }
+
+    function claudegpt($model, $instructions, $prompt, $temperature = 0)
+    {
+        $this->getConfig();
+        if (empty($this->config['CLAUDE_API_KEY'])) return false;
+        $result = $this->requestJson('https://api.anthropic.com/v1/messages', array(
+            'Content-Type: application/json',
+            'x-api-key: ' . $this->config['CLAUDE_API_KEY'],
+            'anthropic-version: 2023-06-01',
+        ), array(
+            'model' => $model,
+            'max_tokens' => 1000,
+            'temperature' => (float)$temperature,
+            'system' => $instructions,
+            'messages' => array(array('role' => 'user', 'content' => $prompt)),
+        ));
+        $data = json_decode($result, true);
+        if (isset($data['content'][0]['text'])) return $data['content'][0]['text'];
+        DebMes('Cannot answer message: ' . $result, 'gptchat');
+        return '';
+    }
+
+    function geminigpt($model, $instructions, $prompt, $temperature = 0)
+    {
+        $this->getConfig();
+        if (empty($this->config['GEMINI_API_KEY'])) return false;
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model)
+            . ':generateContent?key=' . rawurlencode($this->config['GEMINI_API_KEY']);
+        $result = $this->requestJson($url, array('Content-Type: application/json'), array(
+            'contents' => array(array('parts' => array(array('text' => $instructions . "\n\n" . $prompt)))),
+            'generationConfig' => array('temperature' => (float)$temperature, 'maxOutputTokens' => 1000),
+        ));
+        $data = json_decode($result, true);
+        if (isset($data['candidates'][0]['content']['parts'][0]['text'])) return $data['candidates'][0]['content']['parts'][0]['text'];
+        DebMes('Cannot answer message: ' . $result, 'gptchat');
+        return '';
+    }
+
+    function openaiCompatible($provider, $model, $instructions, $prompt, $temperature = 0)
+    {
+        $endpoints = array(
+            'deepseek' => 'https://api.deepseek.com/chat/completions',
+            'kimi' => 'https://api.moonshot.cn/v1/chat/completions',
+            'qwen' => 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+        );
+        if (!isset($endpoints[$provider])) return false;
+        $this->getConfig();
+        $keyName = strtoupper($provider) . '_API_KEY';
+        if (empty($this->config[$keyName])) return false;
+        $result = $this->requestJson($endpoints[$provider], array(
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->config[$keyName],
+        ), array(
+            'model' => $model,
+            'temperature' => (float)$temperature,
+            'messages' => array(
+                array('role' => 'system', 'content' => $instructions),
+                array('role' => 'user', 'content' => $prompt),
+            ),
+        ));
+        $data = json_decode($result, true);
+        if (isset($data['choices'][0]['message']['content'])) return $data['choices'][0]['message']['content'];
+        DebMes('Cannot answer message: ' . $result, 'gptchat');
+        return '';
     }
 
     function api($params)
