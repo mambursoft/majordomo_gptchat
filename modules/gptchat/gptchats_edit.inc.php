@@ -7,6 +7,7 @@ if ($this->owner->name == 'panel') {
 }
 $table_name = 'gptchats';
 $rec = SQLSelectOne("SELECT * FROM $table_name WHERE ID='" . (int)$id . "'");
+$out['MODEL_DEPRECATED'] = $this->isDeprecatedModel(isset($rec['MODEL']) ? $rec['MODEL'] : '') ? 1 : 0;
 
 if ($this->tab == 'history' && $rec['ID']) {
     if ($this->mode == 'run') {
@@ -167,7 +168,11 @@ if ($this->config['OPENAI_API_KEY']) {
                 $models = $data['data'];
                 foreach ($models as $model) {
                     if (preg_match('/^gpt/', $model['id'])) {
-                        $gpt_models[] = array('id' => $model['id'], 'title' => 'OpenAI ' . $model['id']);
+                        $gpt_models[] = array(
+                            'id' => $model['id'],
+                            'title' => 'OpenAI ' . $model['id'],
+                            'deprecated' => $this->isDeprecatedModel($model['id']) ? 1 : 0,
+                        );
                     }
                 }
             }
