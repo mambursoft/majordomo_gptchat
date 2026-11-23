@@ -12,7 +12,7 @@
             Yandex OAuth Token:
             <a href="https://oauth.yandex.ru/authorize?response_type=token&client_id=1a6990aa636648e9b2ef855fa7bec2fb" target="_blank"><i class="glyphicon glyphicon-question-sign"></i></a>
         </label>
-        <div class="controls"><input type="text" name="yandex_oauth" value="[#YANDEX_OAUTH#]" class="form-control"></div>
+        <div class="controls"><div class="input-group"><input type="password" id="yandex_oauth" name="yandex_oauth" value="[#YANDEX_OAUTH#]" class="form-control" autocomplete="off"><span class="input-group-btn"><button type="button" class="btn btn-default" onclick="var e=document.getElementById('yandex_oauth'); e.type=e.type==='password'?'text':'password'; return false;">Показать</button></span></div></div>
     </div>
 <div class="form-group">
  <label class="control-label"[#if ERR_YANDEX_CATALOG_ID#] style="color:red;font-weight:bold"[#endif#]>
@@ -27,7 +27,7 @@
             OpenAI API Key:
             <a href="https://platform.openai.com/api-keys" target="_blank"><i class="glyphicon glyphicon-question-sign"></i></a>
         </label>
-        <div class="controls"><input type="text" name="openai_api_key" value="[#OPENAI_API_KEY#]" class="form-control"></div>
+        <div class="controls"><div class="input-group"><input type="password" id="openai_api_key" name="openai_api_key" value="[#OPENAI_API_KEY#]" class="form-control" autocomplete="off"><span class="input-group-btn"><button type="button" class="btn btn-default" onclick="var e=document.getElementById('openai_api_key'); e.type=e.type==='password'?'text':'password'; return false;">Показать</button></span></div></div>
     </div>
 
 
@@ -48,7 +48,7 @@
         <label class="control-label"[#if ERR_CUSTOM_GPT_KEY#] style="color:red;font-weight:bold"[#endif#]>
             Custom API key (optional):
         </label>
-        <div class="controls"><input type="text" name="custom_gpt_key" value="[#CUSTOM_GPT_KEY#]" class="form-control"></div>
+        <div class="controls"><div class="input-group"><input type="password" id="custom_gpt_key" name="custom_gpt_key" value="[#CUSTOM_GPT_KEY#]" class="form-control" autocomplete="off"><span class="input-group-btn"><button type="button" class="btn btn-default" onclick="var e=document.getElementById('custom_gpt_key'); e.type=e.type==='password'?'text':'password'; return false;">Показать</button></span></div></div>
     </div>
 
 <div class="form-actions">
