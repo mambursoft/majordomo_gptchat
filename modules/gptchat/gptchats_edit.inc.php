@@ -7,6 +7,7 @@ if ($this->owner->name == 'panel') {
 }
 $table_name = 'gptchats';
 $rec = SQLSelectOne("SELECT * FROM $table_name WHERE ID='" . (int)$id . "'");
+$out['PROMPT_IMPROVED'] = gr('improved') ? 1 : 0;
 
 if ($this->tab == 'history' && $rec['ID']) {
     if ($this->mode == 'run') {
@@ -33,7 +34,7 @@ if ($this->tab == 'history' && $rec['ID']) {
 
 }
 
-if ($this->mode == 'update') {
+if ($this->mode == 'update' || $this->mode == 'improve_prompt') {
     $ok = 1;
 
     if ($this->tab == '') {
@@ -116,6 +117,15 @@ if ($this->mode == 'update') {
         } else {
             $new_rec = 1;
             $rec['ID'] = SQLInsert($table_name, $rec); // adding new record
+        }
+
+        if ($this->mode == 'improve_prompt' && $this->tab == 'prompt' && $rec['ID']) {
+            $improved = $this->improvePromptOnce($rec, $rec['INSTRUCTIONS'], $rec['PROMPT']);
+            if ($improved !== $rec['PROMPT']) {
+                $rec['PROMPT'] = $improved;
+                SQLUpdate($table_name, $rec);
+            }
+            $this->redirect('?id=' . $rec['ID'] . '&view_mode=edit_gptchats&tab=prompt&improved=1');
         }
 
         if ($rec['LINKED_OBJECT'] != '' && $rec['LINKED_PROPERTY'] != '') {

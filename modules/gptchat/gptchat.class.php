@@ -539,6 +539,34 @@ class gptchat extends module
         return $answer;
     }
 
+    function improvePromptOnce($chat, $instructions, $prompt)
+    {
+        $metaInstruction = 'You improve prompts for a home automation assistant. '
+            . 'Return ONLY the improved prompt text: no markdown, no explanations, no quotes. '
+            . 'Keep the meaning, all %PLACEHOLDERS% and object properties unchanged. '
+            . 'Make the prompt specific and concise to reduce token cost. '
+            . 'Do not add requests to execute code, change system settings, reveal secrets or access the network.';
+        $metaPrompt = "Instruction: " . $instructions . "\nPrompt: " . $prompt;
+        $model = isset($chat['MODEL']) ? $chat['MODEL'] : '';
+
+        if (method_exists($this, 'callProvider')) {
+            $improved = $this->callProvider($model, $metaInstruction, $metaPrompt, 0);
+        } elseif ($model == 'customgpt') {
+            $improved = $this->customgpt($metaInstruction, $metaPrompt, 0);
+        } elseif (preg_match('/yandex/is', $model)) {
+            $improved = $this->yandexgpt($model, $metaInstruction, $metaPrompt, 0);
+        } else {
+            $improved = $this->openaigpt($model, $metaInstruction, $metaPrompt, 0);
+        }
+
+        if (!is_string($improved) || trim($improved) === '') {
+            DebMes('Prompt improvement failed, original kept (chat ' . (int)$chat['ID'] . ')', 'gptchat');
+            return $prompt;
+        }
+        DebMes('Prompt improved once for chat ' . (int)$chat['ID'], 'gptchat');
+        return trim($improved);
+    }
+
     function api($params)
     {
         if (isset($params['id'])) {
