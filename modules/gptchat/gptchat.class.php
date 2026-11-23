@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * GPT chat
  * @package project
@@ -129,6 +129,9 @@ class gptchat extends module
         $out['CUSTOM_GPT_URL'] = $this->config['CUSTOM_GPT_URL'];
         $out['CUSTOM_GPT_MODEL'] = $this->config['CUSTOM_GPT_MODEL'];
         $out['CUSTOM_GPT_KEY'] = $this->config['CUSTOM_GPT_KEY'];
+        foreach (array('CLAUDE_API_KEY', 'GEMINI_API_KEY', 'DEEPSEEK_API_KEY', 'KIMI_API_KEY', 'QWEN_API_KEY') as $newKey) {
+            $out[$newKey] = isset($this->config[$newKey]) ? $this->config[$newKey] : '';
+        }
         if ($this->view_mode == 'update_settings' && $this->action == 'admin') {
             $this->config['YANDEX_OAUTH'] = gr('yandex_oauth');
             $this->config['YANDEX_CATALOG_ID'] = gr('yandex_catalog_id');
@@ -136,6 +139,9 @@ class gptchat extends module
             $this->config['CUSTOM_GPT_URL'] = gr('custom_gpt_url');
             $this->config['CUSTOM_GPT_MODEL'] = gr('custom_gpt_model');
             $this->config['CUSTOM_GPT_KEY'] = gr('custom_gpt_key');
+            foreach (array('CLAUDE_API_KEY', 'GEMINI_API_KEY', 'DEEPSEEK_API_KEY', 'KIMI_API_KEY', 'QWEN_API_KEY') as $newKey) {
+                $this->config[$newKey] = gr(strtolower($newKey));
+            }
             $this->saveConfig();
             $this->redirect("?");
         }
