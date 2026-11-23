@@ -1,0 +1,82 @@
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>Аудіо → текст, переклад або саммарі</h4></div>
+    <div class="panel-body">
+        <form method="post" class="form-horizontal" action="?view_mode=audio">
+            <input type="hidden" name="audio_process" value="1">
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Провайдер:</label>
+                <div class="col-lg-9">
+                    <select name="audio_provider" class="form-control">
+                    [#begin AUDIO_PROVIDERS#]
+                        <option value="[#ID#]">[#TITLE#]</option>
+                    [#end AUDIO_PROVIDERS#]
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Файл з cms/sounds:</label>
+                <div class="col-lg-9">
+                    <select name="audio_file" class="form-control">
+                    [#begin AUDIO_FILES#]
+                        <option value="[#FILE#]">[#FILE#]</option>
+                    [#end AUDIO_FILES#]
+                    </select>
+                    <p class="help-block">Підтримуються mp3, wav, ogg, m4a. Файл має бути в каталозі cms/sounds/.</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Що зробити:</label>
+                <div class="col-lg-9">
+                    <select name="audio_task" class="form-control">
+                        <option value="transcript">Транскрипт (текст аудіо)</option>
+                        <option value="translate">Переклад на обрану мову</option>
+                        <option value="summary">Коротке саммарі</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">Мова:</label>
+                <div class="col-lg-9">
+                    <select name="audio_language" class="form-control">
+                        <option value="uk">Українська</option>
+                        <option value="ru">Російська</option>
+                        <option value="en">English</option>
+                        <option value="de">Deutsch</option>
+                        <option value="fr">Français</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-lg-offset-3 col-lg-9">
+                    <button type="submit" class="btn btn-primary">Обробити аудіо</button>
+                </div>
+            </div>
+        </form>
+
+        [#if AUDIO_ERROR!=""#]
+        <div class="alert alert-danger">[#AUDIO_ERROR#]</div>
+        [#endif AUDIO_ERROR#]
+        [#if AUDIO_RESULT!=""#]
+        <div class="form-group">
+            <label>Результат:</label>
+            <textarea class="form-control" rows="8" style="font-family:Consolas,monospace;">[#AUDIO_RESULT#]</textarea>
+        </div>
+        [#endif AUDIO_RESULT#]
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading"><h4>Орієнтовна вартість, USD</h4></div>
+    <div class="panel-body">
+        <p class="help-block">Ціни наведені орієнтовно в доларах США, щоб не застарівали в місцевій валюті. Перед великим обсягом перевіряйте поточні тарифи провайдера.</p>
+        <table class="table table-condensed">
+            <thead><tr><th>Провайдер</th><th>Розпізнавання</th><th>Текстова обробка</th><th>Приклад: 10 хв аудіо</th></tr></thead>
+            <tbody>
+                <tr><td>OpenAI Whisper + gpt-4o-mini</td><td>~$0.006 / хв</td><td>~$0.00015 / 1K токенів</td><td>~$0.06 + текст</td></tr>
+                <tr><td>Gemini 2.0 Flash</td><td>~$0.001 / хв</td><td>~$0.000075 / 1K токенів</td><td>~$0.01 + текст</td></tr>
+                <tr><td>Yandex SpeechKit + YandexGPT</td><td>~$0.005 / хв</td><td>~$0.001 / 1K токенів</td><td>~$0.05 + текст</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>

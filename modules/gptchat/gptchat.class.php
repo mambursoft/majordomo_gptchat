@@ -123,6 +123,28 @@ class gptchat extends module
     function admin(&$out)
     {
         $this->getConfig();
+        if ($this->view_mode == 'audio') {
+            $out['AUDIO_FILES'] = array();
+            foreach ($this->audioFiles() as $audioFile) {
+                $out['AUDIO_FILES'][] = array('FILE' => $audioFile);
+            }
+            $out['AUDIO_PROVIDERS'] = array();
+            foreach ($this->audioProviders() as $providerId => $providerTitle) {
+                $out['AUDIO_PROVIDERS'][] = array('ID' => $providerId, 'TITLE' => $providerTitle);
+            }
+            $out['AUDIO_RESULT'] = '';
+            $out['AUDIO_ERROR'] = '';
+            if (isset($_POST['audio_process'])) {
+                $result = $this->audioProcess(
+                    isset($_POST['audio_provider']) ? (string)$_POST['audio_provider'] : 'openai',
+                    isset($_POST['audio_file']) ? (string)$_POST['audio_file'] : '',
+                    isset($_POST['audio_task']) ? (string)$_POST['audio_task'] : 'transcript',
+                    isset($_POST['audio_language']) ? (string)$_POST['audio_language'] : ''
+                );
+                $out['AUDIO_RESULT'] = $result['text'];
+                $out['AUDIO_ERROR'] = $result['error'];
+            }
+        }
         $out['YANDEX_CATALOG_ID'] = $this->config['YANDEX_CATALOG_ID'];
         $out['YANDEX_OAUTH'] = $this->config['YANDEX_OAUTH'];
         $out['OPENAI_API_KEY'] = $this->config['OPENAI_API_KEY'];
@@ -537,6 +559,146 @@ class gptchat extends module
             }
         }
         return $answer;
+    }
+
+    function audioProviders()
+    {
+        return array(
+            'openai' => 'OpenAI Whisper + Chat',
+            'gemini' => 'Google Gemini (audio)',
+            'yandex' => 'Yandex SpeechKit + GPT',
+        );
+    }
+
+    function audioFiles()
+    {
+        $files = array();
+        $dir = ROOT . 'cms' . DIRECTORY_SEPARATOR . 'sounds' . DIRECTORY_SEPARATOR;
+        if (!is_dir($dir)) {
+            return $files;
+        }
+        foreach (glob($dir . '*.{mp3,wav,ogg,m4a}', GLOB_BRACE) as $file) {
+            $files[] = basename($file);
+        }
+        sort($files);
+        return $files;
+    }
+
+    function sttTranscribe($provider, $filePath, $language)
+    {
+        if (!is_file($filePath)) {
+            return array('text' => '', 'error' => 'Файл не найден');
+        }
+        $this->getConfig();
+
+        if ($provider === 'openai') {
+            if (empty($this->config['OPENAI_API_KEY'])) return array('text' => '', 'error' => 'Не задан OpenAI API Key');
+            $post = array('model' => 'whisper-1', 'file' => '@' . $filePath);
+            if ($language !== '') $post['language'] = $language;
+            $ch = curl_init('https://api.openai.com/v1/audio/transcriptions');
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer ' . $this->config['OPENAI_API_KEY']));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            $result = curl_exec($ch);
+            if ($result === false) { $error = curl_error($ch); curl_close($ch); return array('text' => '', 'error' => $error); }
+            curl_close($ch);
+            $data = json_decode($result, true);
+            if (isset($data['text'])) return array('text' => $data['text'], 'error' => '');
+            return array('text' => '', 'error' => substr((string)$result, 0, 300));
+        }
+
+        if ($provider === 'gemini') {
+            if (empty($this->config['GEMINI_API_KEY'])) return array('text' => '', 'error' => 'Не задан Gemini API Key');
+            $mime = 'audio/mpeg';
+            $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+            if ($ext === 'wav') $mime = 'audio/wav';
+            if ($ext === 'ogg') $mime = 'audio/ogg';
+            if ($ext === 'm4a') $mime = 'audio/mp4';
+            $payload = array(
+                'contents' => array(array('parts' => array(
+                    array('text' => 'Transcribe this audio exactly. Return only the transcript text.'),
+                    array('inline_data' => array('mime_type' => $mime, 'data' => base64_encode(file_get_contents($filePath)))),
+                ))),
+            );
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . rawurlencode($this->config['GEMINI_API_KEY']);
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            $result = curl_exec($ch);
+            if ($result === false) { $error = curl_error($ch); curl_close($ch); return array('text' => '', 'error' => $error); }
+            curl_close($ch);
+            $data = json_decode($result, true);
+            if (isset($data['candidates'][0]['content']['parts'][0]['text'])) return array('text' => $data['candidates'][0]['content']['parts'][0]['text'], 'error' => '');
+            return array('text' => '', 'error' => substr((string)$result, 0, 300));
+        }
+
+        if ($provider === 'yandex') {
+            if (empty($this->config['YANDEX_OAUTH']) || empty($this->config['YANDEX_CATALOG_ID'])) {
+                return array('text' => '', 'error' => 'Не заданы Yandex OAuth/Catalog ID');
+            }
+            $ch = curl_init('https://iam.api.cloud.yandex.net/iam/v1/tokens');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(array('yandexPassportOauthToken' => $this->config['YANDEX_OAUTH'])));
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            $iamResult = curl_exec($ch);
+            curl_close($ch);
+            $iam = json_decode((string)$iamResult, true);
+            if (empty($iam['iamToken'])) return array('text' => '', 'error' => 'Не удалось получить IAM-токен');
+            $url = 'https://stt.api.cloud.yandex.net/speech/v1/stt:recognize?folderId=' . rawurlencode($this->config['YANDEX_CATALOG_ID']);
+            if ($language !== '') $url .= '&language=' . rawurlencode($language);
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Bearer ' . $iam['iamToken']));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, file_get_contents($filePath));
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            $result = curl_exec($ch);
+            if ($result === false) { $error = curl_error($ch); curl_close($ch); return array('text' => '', 'error' => $error); }
+            curl_close($ch);
+            $data = json_decode($result, true);
+            if (isset($data['result'])) return array('text' => $data['result'], 'error' => '');
+            return array('text' => '', 'error' => substr((string)$result, 0, 300));
+        }
+        return array('text' => '', 'error' => 'Неизвестный провайдер');
+    }
+
+    function audioProcess($provider, $file, $task, $language)
+    {
+        $file = basename((string)$file);
+        $path = ROOT . 'cms' . DIRECTORY_SEPARATOR . 'sounds' . DIRECTORY_SEPARATOR . $file;
+        $stt = $this->sttTranscribe($provider, $path, $language === '' ? 'ru-RU' : $language);
+        if ($stt['error'] !== '') {
+            DebMes('Audio STT error (' . $provider . '): ' . $stt['error'], 'gptchat');
+            return array('text' => '', 'error' => $stt['error']);
+        }
+        $text = $stt['text'];
+        if ($task === 'translate' || $task === 'summary') {
+            $instruction = $task === 'translate'
+                ? 'Translate the following text into ' . $language . '. Return only the translation.'
+                : 'Summarize the following text in ' . $language . '. Return only the summary.';
+            $model = $provider === 'openai' ? 'gpt-4o-mini' : ($provider === 'yandex' ? 'yandexgpt-lite' : 'gemini-2.0-flash');
+            if (method_exists($this, 'callProvider')) {
+                $textResult = $this->callProvider($model, $instruction, $text, 0);
+            } elseif ($provider === 'openai' && method_exists($this, 'openaigpt')) {
+                $textResult = $this->openaigpt($model, $instruction, $text, 0);
+            } elseif ($provider === 'yandex' && method_exists($this, 'yandexgpt')) {
+                $textResult = $this->yandexgpt($model, $instruction, $text, 0);
+            } else {
+                $textResult = $text;
+            }
+            if (is_string($textResult) && trim($textResult) !== '') $text = $textResult;
+        }
+        return array('text' => $text, 'error' => '');
     }
 
     function api($params)
