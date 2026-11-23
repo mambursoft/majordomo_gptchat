@@ -26,11 +26,11 @@
  Модель (*):
  </label>
  <div class="col-lg-9">
-  <select name="model" id="model" class="form-control"[#if MODEL_DEPRECATED#] disabled[#endif MODEL_DEPRECATED#]>
+  <select name="model" id="model" class="form-control">
    <option value=""></option>
    [#if MODEL_DEPRECATED#]
-   <option value="[#MODEL#]" selected>[#MODEL#] (deprecated)</option>
-   <input type="hidden" name="model" value="[#MODEL#]">
+   <option value="[#MODEL#]" selected disabled>[#MODEL#] (deprecated)</option>
+   <input type="hidden" name="model" id="model_hidden" value="[#MODEL#]">
    [#endif MODEL_DEPRECATED#]
    [#if CUSTOM_GPT_URL!=""#]
    <option value="customgpt"[#if MODEL="customgpt"#] selected[#endif#]>Custom API</option>
@@ -47,6 +47,19 @@
    [#end GPT_MODELS#]
    [#endif GPT_MODELS#]
   </select>
+  [#if MODEL_DEPRECATED#]
+  <p class="help-block" style="color:#a85f00;">Текущая модель устарела. Чат продолжает работать, но для новых запросов лучше выбрать актуальную модель из списка.</p>
+  <script type="text/javascript">
+   (function () {
+    var select = document.getElementById('model');
+    if (!select) return;
+    select.addEventListener('change', function () {
+     var hidden = document.getElementById('model_hidden');
+     if (hidden) hidden.parentNode.removeChild(hidden);
+    });
+   })();
+  </script>
+  [#endif MODEL_DEPRECATED#]
   </div>
 </div>
 [#if ID!=""#]
