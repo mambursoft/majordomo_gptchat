@@ -377,8 +377,14 @@ class gptchat extends module
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($request));
         $result = curl_exec($ch);
+        if ($result === false) {
+            DebMes('gptchat cURL error: ' . curl_error($ch), 'gptchat');
+            $result = '';
+        }
         curl_close($ch);
 
         if ($result != '') {
@@ -436,8 +442,14 @@ class gptchat extends module
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($request));
         $result = curl_exec($ch);
+        if ($result === false) {
+            DebMes('gptchat cURL error: ' . curl_error($ch), 'gptchat');
+            $result = '';
+        }
         curl_close($ch);
 
         if ($result != '') {
@@ -466,8 +478,14 @@ class gptchat extends module
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         $result = curl_exec($ch);
+        if ($result === false) {
+            DebMes('gptchat cURL error: ' . curl_error($ch), 'gptchat');
+            $result = '';
+        }
         curl_close($ch);
 
         $iamToken = '';
@@ -524,8 +542,14 @@ class gptchat extends module
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($request));
         $result = curl_exec($ch);
+        if ($result === false) {
+            DebMes('gptchat cURL error: ' . curl_error($ch), 'gptchat');
+            $result = '';
+        }
         curl_close($ch);
 
         if ($result != '') {
