@@ -51,6 +51,27 @@
         <div class="controls"><div class="input-group"><input type="password" id="custom_gpt_key" name="custom_gpt_key" value="[#CUSTOM_GPT_KEY#]" class="form-control" autocomplete="off"><span class="input-group-btn"><button type="button" class="btn btn-default" onclick="var e=document.getElementById('custom_gpt_key'); e.type=e.type==='password'?'text':'password'; return false;">Показать</button></span></div></div>
     </div>
 
+    <div class="form-group">
+        <label class="control-label">Claude API Key (Anthropic)</label>
+        <div class="controls"><input type="text" name="claude_api_key" value="[#CLAUDE_API_KEY#]" class="form-control"></div>
+    </div>
+    <div class="form-group">
+        <label class="control-label">Gemini API Key (Google)</label>
+        <div class="controls"><input type="text" name="gemini_api_key" value="[#GEMINI_API_KEY#]" class="form-control"></div>
+    </div>
+    <div class="form-group">
+        <label class="control-label">DeepSeek API Key</label>
+        <div class="controls"><input type="text" name="deepseek_api_key" value="[#DEEPSEEK_API_KEY#]" class="form-control"></div>
+    </div>
+    <div class="form-group">
+        <label class="control-label">Kimi API Key (Moonshot)</label>
+        <div class="controls"><input type="text" name="kimi_api_key" value="[#KIMI_API_KEY#]" class="form-control"></div>
+    </div>
+    <div class="form-group">
+        <label class="control-label">Qwen API Key (DashScope)</label>
+        <div class="controls"><input type="text" name="qwen_api_key" value="[#QWEN_API_KEY#]" class="form-control"></div>
+    </div>
+
 <div class="form-actions">
 <button type="submit" name="subm" value="Submit" class="btn btn-primary"><#LANG_UPDATE#></button>
 <input type="hidden" name="view_mode" value="update_settings">
